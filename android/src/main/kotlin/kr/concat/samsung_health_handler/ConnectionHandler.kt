@@ -28,7 +28,7 @@ class ConnectionHandler(
   //    private var mCurrentStartTime: Long = 0
   private fun generatePermissionKeySet(): Set<PermissionKey>? {
     val pmsKeySet: MutableSet<PermissionKey> = HashSet()
-    pmsKeySet.add(PermissionKey(StepCountReader.STEP_SUMMARY_DATA_TYPE_NAME, PermissionType.READ))
+    // pmsKeySet.add(PermissionKey(StepCountReader.STEP_SUMMARY_DATA_TYPE_NAME, PermissionType.READ))
     pmsKeySet.add(PermissionKey(StepCount.HEALTH_DATA_TYPE, PermissionType.READ))
     return pmsKeySet
   }
