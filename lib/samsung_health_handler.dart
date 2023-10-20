@@ -2,25 +2,29 @@ import 'dart:async';
 
 import 'package:flutter/services.dart';
 import 'package:rxdart/rxdart.dart';
-import 'package:samsung_health_handler/StepCountDataType.dart';
+import 'package:samsung_health_handler/step_count_data_type.dart';
 
 //
 class SamsungHealthHandlerInitialize {
   bool isConnected;
   bool? permissionAcquired;
 
-  SamsungHealthHandlerInitialize({required this.isConnected, this.permissionAcquired});
+  SamsungHealthHandlerInitialize({
+    required this.isConnected,
+    this.permissionAcquired,
+  });
 }
 
 class SamsungHealthHandler {
-  static const MethodChannel channel = const MethodChannel('samsung_health_handler');
+  static const MethodChannel channel = MethodChannel('samsung_health_handler');
   static const EventChannel stepChannel =
       EventChannel('samsung_health_handler_event_steps_channel');
   static const EventChannel connectionChannel =
       EventChannel('samsung_health_handler_event_connection_channel');
 
   // ignore: close_sinks
-  static StreamController<StepCountDataType> streamController = StreamController.broadcast();
+  static StreamController<StepCountDataType> streamController =
+      StreamController.broadcast();
 
   static Stream<StepCountDataType?> get stream =>
       SamsungHealthHandler.stepChannel.receiveBroadcastStream().map((event) {
@@ -32,58 +36,74 @@ class SamsungHealthHandler {
         if (event.runtimeType.toString().contains('List<dynamic>') ||
             event.runtimeType.toString().contains('List<Object?>')) {
           // print('!!!!들갔누!!!!!!!!!!!!!!!!!!!');
-          List<dynamic> newArr = List.from(event);
-          var stepCountBinningData = newArr.map((e) {
+          final newArr = List<dynamic>.from(event);
+          final stepCountBinningData = newArr.map((e) {
 //            print(e);
             return StepCountBinningDataType.fromJson({
               ...e,
               'receivedAt': DateTime.now().millisecondsSinceEpoch,
             });
           }).toList();
-          var stepCountData = samsungHandlerValueHandler.stepCountState.value!.toJson();
+          final stepCountData =
+              samsungHandlerValueHandler.stepCountState.value!.toJson();
           // print('이거니??');
           // print(stepCountData);
-          samsungHandlerValueHandler.stepCountState.add(StepCountDataType.fromJson({
-            ...stepCountData,
-            ...{
-              'binningData': stepCountBinningData,
-            }
-          }));
+          samsungHandlerValueHandler.stepCountState.add(
+            StepCountDataType.fromJson({
+              ...stepCountData,
+              ...{
+                'binningData': stepCountBinningData,
+              },
+            }),
+          );
         } else {
-          final Map<String, dynamic> data = Map.from(event);
+          final data = Map<String, dynamic>.from(event);
           // print('이거니??2222');
           // print(data);
-          var today = DateTime.now();
-          if (DateTime.fromMillisecondsSinceEpoch(data['timestamp']).difference(today).inDays >=
+          final today = DateTime.now();
+          if (DateTime.fromMillisecondsSinceEpoch(data['timestamp'])
+                  .difference(today)
+                  .inDays >=
               0) {
-            samsungHandlerValueHandler.stepCountState.add(StepCountDataType.fromJson({
-              ...data,
-              ...{'binningData': null}
-            }));
+            samsungHandlerValueHandler.stepCountState.add(
+              StepCountDataType.fromJson({
+                ...data,
+                ...{'binningData': null},
+              }),
+            );
           } else {
-            samsungHandlerValueHandler.stepCountState.add(StepCountDataType.fromJson({
-              ...data,
-              ...{
-                'binningData': samsungHandlerValueHandler.stepCountState.value?.binningData,
-              }
-            }));
+            samsungHandlerValueHandler.stepCountState.add(
+              StepCountDataType.fromJson({
+                ...data,
+                ...{
+                  'binningData': samsungHandlerValueHandler
+                      .stepCountState.value?.binningData,
+                },
+              }),
+            );
           }
         }
-        if (samsungHandlerValueHandler.stepCountState.value != null)
-          return samsungHandlerValueHandler.stepCountState.value!;
+        if (samsungHandlerValueHandler.stepCountState.value != null) {
+          return samsungHandlerValueHandler.stepCountState.value;
+        }
         return null;
         // return samsungHandlerValueHandler.stepCountState.value;
       });
 
   // ignore: top_level_function_literal_block
   static Stream<dynamic> get connectionStream =>
-      SamsungHealthHandler.connectionChannel.receiveBroadcastStream().map((event) {
-        final Map<String, dynamic> data = Map.from(event);
+      SamsungHealthHandler.connectionChannel
+          .receiveBroadcastStream()
+          .map((event) {
+        final data = Map<String, dynamic>.from(event);
         return data;
       });
 
   static Future<SamsungHealthHandlerInitialize> initialize() async {
-    var result = SamsungHealthHandlerInitialize(isConnected: false, permissionAcquired: false);
+    final result = SamsungHealthHandlerInitialize(
+      isConnected: false,
+      permissionAcquired: false,
+    );
 
     if (samsungHandlerInitializeState.initialized.value == true) {
       // print('ALREADY_INITIALIZED@@@@@@@@@@@@');
@@ -95,15 +115,18 @@ class SamsungHealthHandler {
       // result.permissionAcquired = true;
     }
     channel.invokeMethod('initialize');
-    var res = SamsungHealthHandler.connectionStream.takeWhile((element) {
+    final res = SamsungHealthHandler.connectionStream.takeWhile((element) {
       // print('123123@@@@@@@@@@@@');
       // print(element);
       // print('@@!12121212');
       // if (element['requestPermissionResult'] != null) result.permissionAcquired = true;
       // permissionAcquired = element['requestPermissionResult'];
       if (element['isConnected'] == true) result.isConnected = true;
-      if (element['requestPermissionResult'] != null) result.permissionAcquired = true;
-      return element['isConnected'] == null || element['requestPermissionResult'] == null;
+      if (element['requestPermissionResult'] != null) {
+        result.permissionAcquired = true;
+      }
+      return element['isConnected'] == null ||
+          element['requestPermissionResult'] == null;
     });
     // var permissionRes = SamsungHealthHandler.connectionStream.takeWhile((element) {
     //   print('@@@@@@@@@@@@');
@@ -127,7 +150,7 @@ class SamsungHealthHandler {
 
   static Future<Map<String, dynamic>> isPermissionAcquired() async {
     final result = await channel.invokeMethod('isPermissionAcquired');
-    return new Map<String, dynamic>.from(result);
+    return Map<String, dynamic>.from(result);
   }
 
   static Future<dynamic> requestPermission() async {
@@ -135,8 +158,9 @@ class SamsungHealthHandler {
     return result;
   }
 
-  static passTimestamp(int timestampInMillisecond) {
-    channel.invokeMethod('passTimestamp', {'timestamp': timestampInMillisecond});
+  static void passTimestamp(int timestampInMillisecond) {
+    channel
+        .invokeMethod('passTimestamp', {'timestamp': timestampInMillisecond});
   }
 
   static Future<dynamic> prevDate() async {
@@ -149,18 +173,22 @@ class SamsungHealthHandler {
     return result;
   }
 
-  static Future<StepCountDataType> getStepCount(int millisecondTimestamp) async {
+  static Future<StepCountDataType> getStepCount(
+    int millisecondTimestamp,
+  ) async {
     passTimestamp(millisecondTimestamp);
-    StepCountDataType result = StepCountDataType.fromJson({});
-    var today = DateTime.now();
+    var result = StepCountDataType.fromJson({});
+    final today = DateTime.now();
     try {
-      var intList = new List<int>.generate(15, (i) => i + 1);
+      final intList = List<int>.generate(15, (i) => i + 1);
       await Future.forEach(intList, (_) async {
-        await Future.delayed(Duration(milliseconds: 30));
-        var passedTime = DateTime.fromMillisecondsSinceEpoch(millisecondTimestamp);
-        var value = samsungHandlerValueHandler.stepCountState.value;
+        await Future.delayed(const Duration(milliseconds: 30));
+        final passedTime =
+            DateTime.fromMillisecondsSinceEpoch(millisecondTimestamp);
+        final value = samsungHandlerValueHandler.stepCountState.value;
         if (value?.timestamp != null) {
-          var dateTime = DateTime.fromMillisecondsSinceEpoch(value!.timestamp);
+          final dateTime =
+              DateTime.fromMillisecondsSinceEpoch(value!.timestamp);
           // var newValue = samsungHandlerValueHandler.stepCountState.value!.toJson();
           // print('@@@@@@@@@@@@22222223');
           // print(newValue);
@@ -168,7 +196,8 @@ class SamsungHealthHandler {
               dateTime.month == passedTime.month &&
               dateTime.year == passedTime.year) {
             if (passedTime.difference(today).inDays >= 0) {
-              var newValue = samsungHandlerValueHandler.stepCountState.value!.toJson();
+              final newValue =
+                  samsungHandlerValueHandler.stepCountState.value!.toJson();
               // print('@@@@@@@@@@@@');
               // print(newValue);
               newValue['binningData'] = null;
@@ -182,7 +211,7 @@ class SamsungHealthHandler {
       });
       return result;
     } catch (error) {
-      throw error;
+      rethrow;
     }
   }
 }
@@ -190,14 +219,18 @@ class SamsungHealthHandler {
 class SamsungHandlerValueHandler {
   // ignore: close_sinks
   BehaviorSubject<StepCountDataType> stepCountState =
-      new BehaviorSubject<StepCountDataType>.seeded(StepCountDataType.fromJson({}));
+      BehaviorSubject<StepCountDataType>.seeded(
+    StepCountDataType.fromJson({}),
+  );
 }
 
 class SamsungHandlerInitializeState {
   // ignore: close_sinks
-  BehaviorSubject<bool> initialized = new BehaviorSubject<bool>.seeded(false);
+  BehaviorSubject<bool> initialized = BehaviorSubject<bool>.seeded(false);
 }
 
-var samsungHandlerInitializeState = SamsungHandlerInitializeState();
+SamsungHandlerInitializeState samsungHandlerInitializeState =
+    SamsungHandlerInitializeState();
 
-var samsungHandlerValueHandler = SamsungHandlerValueHandler();
+SamsungHandlerValueHandler samsungHandlerValueHandler =
+    SamsungHandlerValueHandler();

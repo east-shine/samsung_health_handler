@@ -16,16 +16,14 @@ class StepCountDataType {
     this.binningData,
   });
 
-  factory StepCountDataType.fromJson(Map json) {
-    return StepCountDataType(
-      stepCount: json['stepCount'] ?? 0,
-      distance: json['distance'],
-      calorie: json['calorie'],
-      timestamp: json['timestamp'],
-      binningData: json['binningData'],
-      error: json['error'],
-    );
-  }
+  factory StepCountDataType.fromJson(Map json) => StepCountDataType(
+        stepCount: json['stepCount'] ?? 0,
+        distance: json['distance'],
+        calorie: json['calorie'],
+        timestamp: json['timestamp'],
+        binningData: json['binningData'],
+        error: json['error'],
+      );
 
   Map<String, dynamic> toJson() => {
         'stepCount': stepCount,
@@ -51,14 +49,13 @@ class StepCountBinningDataType {
     this.error,
   });
 
-  factory StepCountBinningDataType.fromJson(Map json) {
-    return StepCountBinningDataType(
-      stepCount: json['stepCount'] ?? 0,
-      time: json['time'],
-      receivedAt: json['receivedAt'],
-      error: json['error'],
-    );
-  }
+  factory StepCountBinningDataType.fromJson(Map json) =>
+      StepCountBinningDataType(
+        stepCount: json['stepCount'] ?? 0,
+        time: json['time'],
+        receivedAt: json['receivedAt'],
+        error: json['error'],
+      );
 
   Map<String, dynamic> toJson() => {
         'stepCount': stepCount,
